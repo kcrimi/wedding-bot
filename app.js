@@ -39,12 +39,7 @@ app.get('/guests', function(req, res) {
 	    			rsvp_id: group.rsvp_id,
 	    			relationship_id: group.relationship_id,
 	    			address: groupGuests[0].address,
-	    			name: _.reduce(groupGuests, (name, guest, idx) => {
-	    				if (idx > 0) {
-	    					name += " & "
-	    				}
-	    				return name + guest.first_name + " " + guest.last_name
-	    			},""),
+	    			name: groupDisplayName(groupGuests),
 	    			guests: groupGuests.map((guest) => {
 	    				return guest.id
 	    			})
@@ -62,3 +57,24 @@ app.get('/guests', function(req, res) {
 app.listen(process.env.PORT || 3000, function () {
   console.log('Example app listening on port 3000!')
 })
+
+const groupDisplayName = (guests) => {
+	if (guests.length == 1) {
+		return guests[0].first_name + " " + guests[0].last_name
+	} else {
+		var name = groupGuests[0].first_name 
+		if (guests[0].last_name != guests[1].last_name || !guests[1].is_primary_guest) {
+			name = name + " " + guests[0].last_name;
+		} 
+		for (var i = 1; i < guests.length; i++) {
+			if (guests[i].is_primary_guest) {
+				name = name + " & " + guests[i].first_name + " " + guests[i].last_name
+			} else {
+				name = name + " & Family"
+				break
+			}
+		}
+
+		return name;
+	} 
+}
