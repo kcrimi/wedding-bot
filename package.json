@@ -4,7 +4,8 @@
   "description": "Aisleplanner api interface",
   "main": "index.js",
   "scripts": {
-    "test": "hello"
+    "test": "hello",
+    "start": "node app.js"
   },
   "author": "Kevin Crimi",
   "license": "ISC",
