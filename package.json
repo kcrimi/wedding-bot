@@ -9,6 +9,8 @@
   "author": "Kevin Crimi",
   "license": "ISC",
   "dependencies": {
+    "dot-env": "0.0.1",
+    "dotenv": "^4.0.0",
     "express": "^4.15.3",
     "lodash": "^4.17.4",
     "request": "^2.81.0",
