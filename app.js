@@ -3,6 +3,7 @@ const express = require('express')
 const app = express()
 const rp = require('request-promise')
 const _ = require('lodash')
+const bodyParser = require('body-parser')
 
 const AISLE_PLANNER_HEADERS = {
 	    	'X-XSRF-TOKEN': '6defb5fe6bb0a6476a6b011857329c2617af2a0f',
@@ -16,6 +17,11 @@ app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
+
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({
+	extended: true
+}))
 
 app.get('/', function (req, res) {
   res.send("Hello World")
@@ -58,6 +64,36 @@ app.get('/guests', function(req, res) {
 	    .catch(function (err) {
 	        // API call failed... 
 	    });
+})
+
+app.post('/guests/:userId/address', function(req, res) {
+	const USER_ID = req.params.userId;
+	rp({
+	    uri: 'https://www.aisleplanner.com/api/wedding/43499/guests/' + USER_ID,
+	    headers: AISLE_PLANNER_HEADERS,
+	    json: true // Automatically parses the JSON string in the response 
+	}).then(function (user) {
+		user.address.street = req.body.address1 || ''
+		user.address.extended = req.body.address2 || ''
+		user.address.city = req.body.city || ''
+		user.address.region = req.body.state || ''
+		user.address.postcode = req.body.zip || ''
+		user.address.country = req.body.country || ''
+		return user
+	}).then(function (user) {
+		return rp.put({
+			uri: 'https://www.aisleplanner.com/api/wedding/43499/guests/' + USER_ID,
+			headers: AISLE_PLANNER_HEADERS,
+			json: true,
+			body: user
+		})
+	}).then(function (response) {
+		console.log(response)
+		res.send(response)
+	}).catch(function (err) {
+		console.log(err)
+	});
+
 })
 
 app.listen(process.env.PORT || 3000, function () {
