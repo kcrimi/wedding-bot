@@ -5,6 +5,8 @@ const rp = require('request-promise')
 const _ = require('lodash')
 const bodyParser = require('body-parser')
 
+const BASE_URL = 'https://www.aisleplanner.com/api'
+const WEDDING_URL = BASE_URL + '/wedding/'+process.env.WEDDING_ID
 const AISLE_PLANNER_HEADERS = {
 	    	'X-XSRF-TOKEN': '6defb5fe6bb0a6476a6b011857329c2617af2a0f',
 			'X-Requested-With': 'XMLHttpRequest',
@@ -30,12 +32,12 @@ app.get('/', function (req, res) {
 app.get('/guests', function(req, res) {
 	const promises = []
 	promises.push(rp({
-	    uri: 'https://www.aisleplanner.com/api/wedding/43499/guests',
+	    uri: WEDDING_URL+'/guests',
 	    headers: AISLE_PLANNER_HEADERS,
 	    json: true // Automatically parses the JSON string in the response 
 	}));
 	promises.push(rp({
-	    uri: 'https://www.aisleplanner.com/api/wedding/43499/guest_groups',
+	    uri: WEDDING_URL+'/guest_groups',
 	    headers: AISLE_PLANNER_HEADERS,
 	    json: true // Automatically parses the JSON string in the response 
 	}));
@@ -69,7 +71,7 @@ app.get('/guests', function(req, res) {
 app.post('/guests/:userId/address', function(req, res) {
 	const USER_ID = req.params.userId;
 	rp({
-	    uri: 'https://www.aisleplanner.com/api/wedding/43499/guests/' + USER_ID,
+	    uri: WEDDING_URL+'/guests/'+USER_ID,
 	    headers: AISLE_PLANNER_HEADERS,
 	    json: true // Automatically parses the JSON string in the response 
 	}).then(function (user) {
@@ -82,7 +84,7 @@ app.post('/guests/:userId/address', function(req, res) {
 		return user
 	}).then(function (user) {
 		return rp.put({
-			uri: 'https://www.aisleplanner.com/api/wedding/43499/guests/' + USER_ID,
+			uri: WEDDING_URL+'/guests/'+USER_ID,
 			headers: AISLE_PLANNER_HEADERS,
 			json: true,
 			body: user
@@ -120,3 +122,7 @@ const groupDisplayName = (guests) => {
 		return name;
 	} 
 }
+
+setInterval(function() {
+    rp({uri:"https://aisle-planner.herokuapp.com/"})
+}, 600000) // every 10 minutes (600000)
