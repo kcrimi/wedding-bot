@@ -14,46 +14,42 @@ router.get('/', function (req, res) {
   res.send("Hello World")
 })
 
-router.get('/guests', function(req, res) {
+router.get('/guests', function (req, res) {
 	const promises = []
-	promises.push(rp({
-	    uri: WEDDING_URL+'/guests',
-	    headers: AISLE_PLANNER_HEADERS,
-	    json: true // Automatically parses the JSON string in the response 
-	}));
+	promises.push(getAllUsers());
 	promises.push(rp({
 	    uri: WEDDING_URL+'/guest_groups',
 	    headers: AISLE_PLANNER_HEADERS,
 	    json: true // Automatically parses the JSON string in the response 
 	}));
 	Promise.all(promises)
-	    .then(function (results) {
-	    	const guests = results[0]
-	    	const groups = results[1]
-	    	const response = groups.map((group) => {
-	    		groupGuests = _.filter(guests, guest => guest.group_id === group.id)
-	    		groupGuests = _.sortBy(groupGuests, 'group_order');
-	    		return {
-	    			id: group.id,
-	    			rsvp_id: group.rsvp_id,
-	    			relationship_id: group.relationship_id,
-	    			address: groupGuests[0].address,
-	    			name: groupDisplayName(groupGuests),
-	    			guests: groupGuests.map((guest) => {
-	    				return guest.id
-	    			})
-	    		}
-	    	})
-	    	// const match = _.filter(groups, x => x.id === 1606652);
+    .then(function (results) {
+    	const guests = results[0]
+    	const groups = results[1]
+    	const response = groups.map((group) => {
+    		groupGuests = _.filter(guests, guest => guest.group_id === group.id)
+    		groupGuests = _.sortBy(groupGuests, 'group_order');
+    		return {
+    			id: group.id,
+    			rsvp_id: group.rsvp_id,
+    			relationship_id: group.relationship_id,
+    			address: groupGuests[0].address,
+    			name: groupDisplayName(groupGuests),
+    			guests: groupGuests.map((guest) => {
+    				return guest.id
+    			})
+    		}
+    	})
+    	// const match = _.filter(groups, x => x.id === 1606652);
 
-	    	res.send(response);
-	    })
-	    .catch(function (err) {
-	        // API call failed... 
-	    });
+    	res.send(response);
+    })
+    .catch(function (err) {
+        // API call failed... 
+    });
 })
 
-router.post('/guests/:userId/address', function(req, res) {
+router.post('/guests/:userId/address', function (req, res) {
 	const USER_ID = req.params.userId;
 	rp({
 	    uri: WEDDING_URL+'/guests/'+USER_ID,
@@ -83,6 +79,67 @@ router.post('/guests/:userId/address', function(req, res) {
 
 })
 
+router.get('/rsvp/:guestGroupId', function (req, res) {
+	const groupId = req.params.guestGroupId
+	const promises = []
+	promises.push(getAllUsers())
+	promises.push(rp({
+		uri: WEDDING_URL+'/events?all_event_guests',
+		headers: AISLE_PLANNER_HEADERS,
+		json: true
+	}))
+	Promise.all(promises)
+	.then(function (results) {
+		var guests = results[0]
+		var statuses = results[1]
+		console.log('guests ='+guests.length)
+		console.log('statuses ='+statuses.length)
+		guests = _.filter(guests, guest => guest.group_id == groupId)
+		for (var i = 0; i < guests.length; i++) {
+			guests[i].status = _.filter(statuses, status => status.wedding_guest_id === guests[i].id)
+		}
+		guests = _.sortBy(guests, 'group_order');
+		console.log('guests ='+guests.length)
+		console.log('statuses ='+statuses.length)
+		res.send(guests)
+	}).catch(function (err) {
+		console.log(err)
+	})
+})
+
+router.get('/events', function (req,res) {
+	const promises = []
+	promises.push(rp({
+		uri: WEDDING_URL+'/events',
+		headers: AISLE_PLANNER_HEADERS,
+		json: true
+	}))
+	promises.push(rp({
+		uri: WEDDING_URL+'/events?all_meal_options',
+		headers: AISLE_PLANNER_HEADERS,
+		json: true
+	}))
+	Promise.all(promises)
+	.then(function (results) {
+		const events = results[0]
+		const meals = results[1]
+		for (var i = 0; i < events.length; i++) {
+			events[i].meal_options = _.filter(meals, meal => meal.wedding_event_id == events[i].id)
+		}
+		res.send(events)
+	})
+	.catch(function (err) {
+		console.log(err)
+	})
+})
+
+const getAllUsers = () => {
+	return rp({
+	    uri: WEDDING_URL+'/guests',
+	    headers: AISLE_PLANNER_HEADERS,
+	    json: true // Automatically parses the JSON string in the response 
+	})
+}
 
 const groupDisplayName = (guests) => {
 	if (guests.length == 1) {
