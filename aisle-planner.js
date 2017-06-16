@@ -71,7 +71,6 @@ router.post('/guests/:userId/address', function (req, res) {
 			body: user
 		})
 	}).then(function (response) {
-		console.log(response)
 		res.send(response)
 	}).catch(function (err) {
 		console.log(err)
@@ -92,15 +91,11 @@ router.get('/rsvp/:guestGroupId', function (req, res) {
 	.then(function (results) {
 		var guests = results[0]
 		var statuses = results[1]
-		console.log('guests ='+guests.length)
-		console.log('statuses ='+statuses.length)
 		guests = _.filter(guests, guest => guest.group_id == groupId)
 		for (var i = 0; i < guests.length; i++) {
-			guests[i].status = _.filter(statuses, status => status.wedding_guest_id === guests[i].id)
+			guests[i].statuses = _.filter(statuses, status => status.wedding_guest_id === guests[i].id)
 		}
 		guests = _.sortBy(guests, 'group_order');
-		console.log('guests ='+guests.length)
-		console.log('statuses ='+statuses.length)
 		res.send(guests)
 	}).catch(function (err) {
 		console.log(err)
@@ -127,6 +122,27 @@ router.get('/events', function (req,res) {
 			events[i].meal_options = _.filter(meals, meal => meal.wedding_event_id == events[i].id)
 		}
 		res.send(events)
+	})
+	.catch(function (err) {
+		console.log(err)
+	})
+})
+
+router.post('/rsvp', function (req, res) {
+	const rsvps = req.body
+	const promises = []
+	for (var i = 0; i < rsvps.length; i++){
+		console.log(WEDDING_URL+'/events/'+rsvps[i].wedding_event_id+'/guests/'+rsvps[i].wedding_guest_id)
+		promises.push(rp.put({
+			uri: WEDDING_URL+'/events/'+rsvps[i].wedding_event_id+'/guests/'+rsvps[i].wedding_guest_id,
+			headers: AISLE_PLANNER_HEADERS,
+			json: true,
+			body: rsvps[i]
+		}))
+	}
+	Promise.all(promises)
+	.then(function (results) {
+		res.send(results)
 	})
 	.catch(function (err) {
 		console.log(err)
