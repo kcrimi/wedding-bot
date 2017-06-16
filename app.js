@@ -111,11 +111,13 @@ const groupDisplayName = (guests) => {
 			name = name + " " + guests[0].last_name;
 		} 
 		for (var i = 1; i < guests.length; i++) {
-			if (guests[i].is_primary_guest) {
-				name = name + " & " + guests[i].first_name + " " + guests[i].last_name
-			} else {
-				name = name + " & Family"
-				break
+			if (!guests[i].is_anonymous) {
+				if (guests[i].is_primary_guest) {
+					name = name + " & " + guests[i].first_name + " " + guests[i].last_name
+				} else {
+					name = name + " & Family"
+					break
+				}
 			}
 		}
 
