@@ -45,6 +45,7 @@ router.get('/guests', function (req, res) {
     	res.send(response);
     })
     .catch(function (err) {
+    	console.log(err)
         // API call failed... 
     });
 })
