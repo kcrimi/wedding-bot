@@ -14,6 +14,10 @@ router.get('/', function (req, res) {
   res.send("Hello World")
 })
 
+router.use('/', function (req, res, next) {
+	next()
+})
+
 router.get('/guests', function (req, res) {
 	const promises = []
 	promises.push(getAllUsers());
