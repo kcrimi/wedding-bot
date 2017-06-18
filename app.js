@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const app = express()
+const rp = require('request-promise')
 const bodyParser = require('body-parser')
 const aislePlannerRoute = require('./aisle-planner.js')
 
@@ -22,5 +23,5 @@ app.listen(process.env.PORT || 3000, function () {
 })
 
 setInterval(function() {
-    rp({uri:"https://aisle-planner.herokuapp.com/"})
+    rp({uri:"https://aisle-planner.herokuapp.com/s"})
 }, 600000) // every 10 minutes (600000)
