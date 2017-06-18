@@ -16,6 +16,9 @@ app.use(bodyParser.urlencoded({
 	extended: true
 }))
 
+app.get('/awake', (req, res) => {
+	res.send('I\'m awake!')
+})
 app.use('/', aislePlannerRoute)
 
 app.listen(process.env.PORT || 3000, function () {
@@ -23,5 +26,5 @@ app.listen(process.env.PORT || 3000, function () {
 })
 
 setInterval(function() {
-    rp({uri:"https://aisle-planner.herokuapp.com/s"})
+    rp({uri:"https://aisle-planner.herokuapp.com/awake"})
 }, 600000) // every 10 minutes (600000)
