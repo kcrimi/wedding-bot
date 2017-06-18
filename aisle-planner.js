@@ -1,33 +1,94 @@
-const router = require('express').Router();
+const router = require('express').Router()
 const rp = require('request-promise')
+const setCookie = require('set-cookie-parser')
 const _ = require('lodash')
 const BASE_URL = 'https://www.aisleplanner.com/api'
 const WEDDING_URL = BASE_URL + '/wedding/'+process.env.WEDDING_ID
-const AISLE_PLANNER_HEADERS = {
+var sessionId
+
+const getAislePlannerHeaders = (withCookie) => {
+	const aislePlannerHeaders = {
 	    	'X-XSRF-TOKEN': '6defb5fe6bb0a6476a6b011857329c2617af2a0f',
 			'X-Requested-With': 'XMLHttpRequest',
 			'X-AP-API-Version': process.env.API_VERSION,
-			'Cookie': 'session='+process.env.SESSION,
 	    };
+	if (withCookie) {
+		aislePlannerHeaders.Cookie = 'session=' + sessionId
+	}
+	return aislePlannerHeaders
+}
 
 router.get('/', function (req, res) {
   res.send("Hello World")
 })
 
-router.use('/', function (req, res, next) {
-	next()
+// Check if session is valid
+router.use(function (req, res, next) {
+	console.log("KEVIN CHECK")
+	rp({
+		uri: BASE_URL+'/notifications/checkin',
+		headers: getAislePlannerHeaders(true),
+		json: true
+	})
+	.then(function (response) {
+		console.log('CHECKINS PASSED')
+		return
+	}, function (error) {
+		console.log("KEVIN NOT LOGGED IN")
+		if (error.statusCode != 401) {
+			res.status(error.statusCode).send(error)
+		}
+		return updateSession()
+	})
+	.then(function () { next() })
+	.catch(function (err) {
+		console.log(err)
+		res.status(500).send(err)
+	})
 })
 
+const updateSession = () => {
+	console.log("KEVIN NEW SESSION REQUEST")
+	return rp.post({
+		uri: BASE_URL+'/account/signin',
+		headers: getAislePlannerHeaders(false),
+		json: true,
+		resolveWithFullResponse: true,
+		body: {
+			"username": process.env.USERNAME,
+			"password": process.env.PASSWORD
+		}
+	})
+	.then(function (response) {
+		console.log("PARSE COOKIES")
+		console.log(setCookie.parse(response))
+		const cookies = setCookie.parse(response)
+		for (var i = 0; i < cookies.length; i++ ) {
+			var cookie = cookies[i]
+			console.log(cookie)
+			if (cookie.name == "session") {
+				console.log(cookie.value)
+				sessionId = cookie.value
+				return sessionId
+			}
+		}
+		throw("Error renewing session")
+	})
+}
+
+// Get guest groups information
 router.get('/guests', function (req, res) {
+	console.log("START GUEST PULL")
 	const promises = []
 	promises.push(getAllUsers());
 	promises.push(rp({
 	    uri: WEDDING_URL+'/guest_groups',
-	    headers: AISLE_PLANNER_HEADERS,
+	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
 	}));
 	Promise.all(promises)
     .then(function (results) {
+    	console.log("RESULTS")
     	const guests = results[0]
     	const groups = results[1]
     	const response = groups.map((group) => {
@@ -44,6 +105,7 @@ router.get('/guests', function (req, res) {
     			})
     		}
     	})
+    	console.log(response[0])
     	// const match = _.filter(groups, x => x.id === 1606652);
 
     	res.send(response);
@@ -54,11 +116,12 @@ router.get('/guests', function (req, res) {
     });
 })
 
+// Update a guest's address
 router.post('/guests/:userId/address', function (req, res) {
 	const USER_ID = req.params.userId;
 	rp({
 	    uri: WEDDING_URL+'/guests/'+USER_ID,
-	    headers: AISLE_PLANNER_HEADERS,
+	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
 	}).then(function (user) {
 		user.address.street = req.body.address1 || ''
@@ -71,7 +134,7 @@ router.post('/guests/:userId/address', function (req, res) {
 	}).then(function (user) {
 		return rp.put({
 			uri: WEDDING_URL+'/guests/'+USER_ID,
-			headers: AISLE_PLANNER_HEADERS,
+			headers: getAislePlannerHeaders(true),
 			json: true,
 			body: user
 		})
@@ -83,13 +146,14 @@ router.post('/guests/:userId/address', function (req, res) {
 
 })
 
+// Get a guest group's RSVP status for events
 router.get('/rsvp/:guestGroupId', function (req, res) {
 	const groupId = req.params.guestGroupId
 	const promises = []
 	promises.push(getAllUsers())
 	promises.push(rp({
 		uri: WEDDING_URL+'/events?all_event_guests',
-		headers: AISLE_PLANNER_HEADERS,
+		headers: getAislePlannerHeaders(true),
 		json: true
 	}))
 	Promise.all(promises)
@@ -107,16 +171,17 @@ router.get('/rsvp/:guestGroupId', function (req, res) {
 	})
 })
 
+// Get basic information for all events
 router.get('/events', function (req,res) {
 	const promises = []
 	promises.push(rp({
 		uri: WEDDING_URL+'/events',
-		headers: AISLE_PLANNER_HEADERS,
+		headers: getAislePlannerHeaders(true),
 		json: true
 	}))
 	promises.push(rp({
 		uri: WEDDING_URL+'/events?all_meal_options',
-		headers: AISLE_PLANNER_HEADERS,
+		headers: getAislePlannerHeaders(true),
 		json: true
 	}))
 	Promise.all(promises)
@@ -133,6 +198,7 @@ router.get('/events', function (req,res) {
 	})
 })
 
+// Update rsvp status information
 router.post('/rsvp', function (req, res) {
 	const rsvps = req.body
 	const promises = []
@@ -140,7 +206,7 @@ router.post('/rsvp', function (req, res) {
 		console.log(WEDDING_URL+'/events/'+rsvps[i].wedding_event_id+'/guests/'+rsvps[i].wedding_guest_id)
 		promises.push(rp.put({
 			uri: WEDDING_URL+'/events/'+rsvps[i].wedding_event_id+'/guests/'+rsvps[i].wedding_guest_id,
-			headers: AISLE_PLANNER_HEADERS,
+			headers: getAislePlannerHeaders(true),
 			json: true,
 			body: rsvps[i]
 		}))
@@ -154,14 +220,16 @@ router.post('/rsvp', function (req, res) {
 	})
 })
 
+// Get all guests
 const getAllUsers = () => {
 	return rp({
 	    uri: WEDDING_URL+'/guests',
-	    headers: AISLE_PLANNER_HEADERS,
+	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
 	})
 }
 
+// Calculate the display name based on the the guests in the group
 const groupDisplayName = (guests) => {
 	if (guests.length == 1) {
 		return guests[0].first_name + " " + guests[0].last_name
