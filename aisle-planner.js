@@ -10,7 +10,7 @@ const getAislePlannerHeaders = (withCookie) => {
 	const aislePlannerHeaders = {
 	    	'X-XSRF-TOKEN': '6defb5fe6bb0a6476a6b011857329c2617af2a0f',
 			'X-Requested-With': 'XMLHttpRequest',
-			'X-AP-API-Version': process.env.API_VERSION,
+			// 'X-AP-API-Version': process.env.API_VERSION,
 	    };
 	if (withCookie) {
 		aislePlannerHeaders.Cookie = 'session=' + sessionId
