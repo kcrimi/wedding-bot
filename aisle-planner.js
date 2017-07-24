@@ -38,7 +38,7 @@ router.use(function (req, res, next) {
 		if (error.statusCode != 401) {
 			res.status(error.statusCode).send(error)
 		}
-		return updateSession()
+		return updateSession(res, true)
 	})
 	.then(function () { next() })
 	.catch(function (err) {
@@ -47,11 +47,15 @@ router.use(function (req, res, next) {
 	})
 })
 
-const updateSession = () => {
+const updateSession = (res, versionCheck) => {
 	console.log("KEVIN NEW SESSION REQUEST")
+	headers = getAislePlannerHeaders(false)
+	if (versionCheck) {
+		headers['X-AP-API-Version'] = process.env.API_VERSION
+	}
 	return rp.post({
 		uri: BASE_URL+'/account/signin',
-		headers: getAislePlannerHeaders(false),
+		headers: headers,
 		json: true,
 		resolveWithFullResponse: true,
 		body: {
@@ -73,6 +77,12 @@ const updateSession = () => {
 			}
 		}
 		throw("Error renewing session")
+	}, function (err) {
+		// if api version has been upped, sign in without it and notify me
+		if (err.statusCode == 412 && err.response.body.UPGRADE) {
+			console.log("API VERSION ERROR")
+			return updateSession(res, false)
+		}
 	})
 }
 
@@ -252,4 +262,5 @@ const groupDisplayName = (guests) => {
 		return name;
 	} 
 }
+
 module.exports = router;
