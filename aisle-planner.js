@@ -4,6 +4,7 @@ const setCookie = require('set-cookie-parser')
 const _ = require('lodash')
 const BASE_URL = 'https://www.aisleplanner.com/api'
 const WEDDING_URL = BASE_URL + '/wedding/'+process.env.WEDDING_ID
+const Emailer = require('./email.js')
 var sessionId
 
 const getAislePlannerHeaders = (withCookie) => {
@@ -81,6 +82,7 @@ const updateSession = (res, versionCheck) => {
 		// if api version has been upped, sign in without it and notify me
 		if (err.statusCode == 412 && err.response.body.UPGRADE) {
 			console.log("API VERSION ERROR")
+	Emailer.sendNotification()
 			return updateSession(res, false)
 		}
 	})
