@@ -17,6 +17,7 @@
     "lodash": "^4.17.4",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
+    "sendgrid": "^5.2.0",
     "set-cookie-parser": "^2.0.0"
   }
 }
