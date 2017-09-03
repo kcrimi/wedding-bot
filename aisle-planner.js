@@ -137,6 +137,7 @@ router.post('/guests/:userId/address', function (req, res) {
 	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
 	}).then(function (user) {
+		user.email = req.body.email || ''
 		user.address.street = req.body.street || ''
 		user.address.extended = req.body.extended || ''
 		user.address.city = req.body.city || ''
