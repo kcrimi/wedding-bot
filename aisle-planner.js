@@ -137,10 +137,10 @@ router.post('/guests/:userId/address', function (req, res) {
 	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
 	}).then(function (user) {
-		user.address.street = req.body.address1 || ''
-		user.address.extended = req.body.address2 || ''
+		user.address.street = req.body.street || ''
+		user.address.extended = req.body.extended || ''
 		user.address.city = req.body.city || ''
-		user.address.region = req.body.state || ''
+		user.address.region = req.body.region || ''
 		user.address.postcode = req.body.zip || ''
 		user.address.country = req.body.country || ''
 		return user
