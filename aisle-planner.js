@@ -116,8 +116,8 @@ router.get('/guests', function (req, res) {
     			})
     		}
     		if (req.params.includeAddress) {
-    			payload.address: groupGuests[0].address
-    			payload.email: groupGuests[0].email
+    			payload.address = groupGuests[0].address
+    			payload.email = groupGuests[0].email
     		}
     		return payload
     	})
