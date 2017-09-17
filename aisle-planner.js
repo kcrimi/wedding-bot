@@ -110,8 +110,8 @@ router.get('/guests', function (req, res) {
     			id: group.id,
     			rsvp_id: group.rsvp_id,
     			relationship_id: group.relationship_id,
-    			address: groupGuests[0].address,
-    			email: groupGuests[0].email,
+    			address: req.params.includeAddress ? groupGuests[0].address : null,
+    			email: req.params.includeAddress ? groupGuests[0].email : null,
     			name: groupDisplayName(groupGuests),
     			guests: groupGuests.map((guest) => {
     				return guest.id
