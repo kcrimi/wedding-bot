@@ -115,7 +115,7 @@ router.get('/guests', function (req, res) {
     				return guest.id
     			})
     		}
-    		if (req.params.includeAddress) {
+    		if (req.query.includeAddress == 'true') {
     			payload.address = groupGuests[0].address
     			payload.email = groupGuests[0].email
     		}
