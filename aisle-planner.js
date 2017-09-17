@@ -106,17 +106,20 @@ router.get('/guests', function (req, res) {
     	const response = groups.map((group) => {
     		groupGuests = _.filter(guests, guest => guest.group_id === group.id)
     		groupGuests = _.sortBy(groupGuests, 'group_order');
-    		return {
+    		const payload = {
     			id: group.id,
     			rsvp_id: group.rsvp_id,
     			relationship_id: group.relationship_id,
-    			address: req.params.includeAddress ? groupGuests[0].address : null,
-    			email: req.params.includeAddress ? groupGuests[0].email : null,
     			name: groupDisplayName(groupGuests),
     			guests: groupGuests.map((guest) => {
     				return guest.id
     			})
     		}
+    		if (req.params.includeAddress) {
+    			payload.address: groupGuests[0].address
+    			payload.email: groupGuests[0].email
+    		}
+    		return payload
     	})
     	console.log(response[0])
     	// const match = _.filter(groups, x => x.id === 1606652);
