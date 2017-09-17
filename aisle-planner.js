@@ -137,13 +137,17 @@ router.post('/guests/:userId/address', function (req, res) {
 	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
 	}).then(function (user) {
-		user.email = req.body.email || ''
-		user.address.street = req.body.address.street || ''
-		user.address.extended = req.body.address.extended || ''
-		user.address.city = req.body.address.city || ''
-		user.address.region = req.body.address.region || ''
-		user.address.postcode = req.body.address.postcode || ''
-		user.address.country = req.body.address.country || ''
+		if (req.body.email) {
+			user.email = req.body.email
+		}
+		if (req.body.address) {
+			user.address.street = req.body.address.street || ''
+			user.address.extended = req.body.address.extended || ''
+			user.address.city = req.body.address.city || ''
+			user.address.region = req.body.address.region || ''
+			user.address.postcode = req.body.address.postcode || ''
+			user.address.country = req.body.address.country || ''
+		}
 		return user
 	}).then(function (user) {
 		return rp.put({
