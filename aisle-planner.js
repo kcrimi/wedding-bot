@@ -255,22 +255,26 @@ const groupDisplayName = (guests) => {
 	if (guests.length == 1) {
 		return guests[0].first_name + " " + guests[0].last_name
 	} else {
-		var name = groupGuests[0].first_name 
-		if (guests[0].last_name != guests[1].last_name || !guests[1].is_primary_guest) {
-			name = name + " " + guests[0].last_name;
-		} 
-		for (var i = 1; i < guests.length; i++) {
-			if (!guests[i].is_anonymous) {
-				if (guests[i].is_primary_guest) {
-					name = name + " & " + guests[i].first_name + " " + guests[i].last_name
-				} else {
-					name = name + " & Family"
-					break
-				}
+		const andFamily = guests.length >= 4 || _.filter(guests, (g) => {return g.is_anonymous}).length > 2
+		const namedGuests = _.transform(guests, (out, g) => {
+			if (!g.is_anonymous) {
+				out.push(g)
 			}
-		}
-
-		return name;
+			return out.length < 3 && !(out.length == 2 && andFamily)
+		}, [] )
+		var name = _.reduce(namedGuests, (out, g, i, array) => {
+			const lastOfName = (i == array.length - 1 || g.last_name != array[i + 1].last_name)
+			console.log(g.first_name + " "+g.last_name+ " "+ lastOfName + " "+out)
+			if (i > 0) {
+				out += lastOfName ? " & " : ", "
+			}
+			out += g.first_name
+			if (lastOfName) {
+				out = out + " " + g.last_name
+			}
+			return out
+		}, "")
+		return andFamily ? name + " & Family" : name;
 	} 
 }
 
