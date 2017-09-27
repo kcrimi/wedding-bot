@@ -4,6 +4,8 @@ const setCookie = require('set-cookie-parser')
 const _ = require('lodash')
 const BASE_URL = 'https://www.aisleplanner.com/api'
 const WEDDING_URL = BASE_URL + '/wedding/'+process.env.WEDDING_ID
+const DEV_CEREMONY_ID = '194062'
+const CEREMONY_ID = '203464'
 const Emailer = require('./email.js')
 var sessionId
 
@@ -98,14 +100,24 @@ router.get('/guests', function (req, res) {
 	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
 	}));
+	promises.push(rp({
+		uri: WEDDING_URL+'/events?all_event_guests',
+		headers: getAislePlannerHeaders(true),
+		json: true
+	}))
 	Promise.all(promises)
     .then(function (results) {
     	console.log("RESULTS")
     	const guests = results[0]
     	const groups = results[1]
+    	const ceremony_statuses = _.filter(results[2], (x) => {return DEV_CEREMONY_ID == x.wedding_event_id || CEREMONY_ID == x.wedding_event_id})
     	const response = groups.map((group) => {
     		groupGuests = _.filter(guests, guest => guest.group_id === group.id)
     		groupGuests = _.sortBy(groupGuests, 'group_order');
+    		const ceremony_status = _.chain(ceremony_statuses)
+    							.filter((x) => { return x.wedding_guest_id == groupGuests[0].id })
+    							.first()
+    							.value()
     		const payload = {
     			id: group.id,
     			rsvp_id: group.rsvp_id,
@@ -113,7 +125,8 @@ router.get('/guests', function (req, res) {
     			name: groupDisplayName(groupGuests),
     			guests: groupGuests.map((guest) => {
     				return guest.id
-    			})
+    			}),
+    			guestList: ceremony_status ? ceremony_status.guest_list : null
     		}
     		if (req.query.includeAddress == 'true') {
     			payload.address = groupGuests[0].address
@@ -124,7 +137,7 @@ router.get('/guests', function (req, res) {
     	console.log(response[0])
     	// const match = _.filter(groups, x => x.id === 1606652);
 
-    	res.send(response);
+    	res.send(_.filter(response, (x) => { return x.guestList == 1 }));
     })
     .catch(function (err) {
     	console.log(err)
@@ -264,7 +277,6 @@ const groupDisplayName = (guests) => {
 		}, [] )
 		var name = _.reduce(namedGuests, (out, g, i, array) => {
 			const lastOfName = (i == array.length - 1 || g.last_name != array[i + 1].last_name)
-			console.log(g.first_name + " "+g.last_name+ " "+ lastOfName + " "+out)
 			if (i > 0) {
 				out += lastOfName ? " & " : ", "
 			}
