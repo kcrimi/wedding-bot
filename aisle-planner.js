@@ -222,6 +222,16 @@ router.get('/events', function (req,res) {
 	.then(function (results) {
 		const events = results[0]
 		const meals = results[1]
+		meals.map((meal) => {
+			meal.description = meal.name
+			if (meal.description.toLowerCase().includes("chicken")) {
+				meal.name = "Chicken"
+			} else if (meal.description.toLowerCase().includes("steak")) {
+				meal.name = "Beef"
+			} else {
+				meal.name = "Vegetarian"
+			}
+		})
 		for (var i = 0; i < events.length; i++) {
 			events[i].meal_options = _.filter(meals, meal => meal.wedding_event_id == events[i].id)
 		}
