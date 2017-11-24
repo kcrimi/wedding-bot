@@ -147,9 +147,9 @@ router.get('/guests', function (req, res) {
 
 // Update a guest's address
 router.post('/guests/:userId/address', function (req, res) {
-	const USER_ID = req.params.userId;
+	const userId = req.params.userId;
 	rp({
-	    uri: WEDDING_URL+'/guests/'+USER_ID,
+	    uri: WEDDING_URL+'/guests/'+userId,
 	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
 	}).then(function (user) {
@@ -170,7 +170,7 @@ router.post('/guests/:userId/address', function (req, res) {
 		return user
 	}).then(function (user) {
 		return rp.put({
-			uri: WEDDING_URL+'/guests/'+USER_ID,
+			uri: WEDDING_URL+'/guests/'+userId,
 			headers: getAislePlannerHeaders(true),
 			json: true,
 			body: user
@@ -250,18 +250,31 @@ router.get('/events', function (req,res) {
 })
 
 // Update rsvp status information
-router.post('/rsvp', function (req, res) {
+router.post('/rsvp/:guestGroupId', function (req, res) {
 	const rsvps = req.body
-	const promises = []
-	for (var i = 0; i < rsvps.length; i++){
-		console.log(WEDDING_URL+'/events/'+rsvps[i].wedding_event_id+'/guests/'+rsvps[i].wedding_guest_id)
-		promises.push(rp.put({
-			uri: WEDDING_URL+'/events/'+rsvps[i].wedding_event_id+'/guests/'+rsvps[i].wedding_guest_id,
-			headers: getAislePlannerHeaders(true),
-			json: true,
-			body: rsvps[i]
+	const promises = rsvps.guests.reduce((p, guest) => {
+		if (guest.first_name && guest.last_name) {
+			 p.push(rp.put({
+				uri: WEDDING_URL+'/guests/'+guest.id,
+				headers: getAislePlannerHeaders(true),
+				json: true,
+				body: {
+					first_name: guest.first_name,
+					last_name: guest.last_name,
+					is_anonymous: false,
+					group_id: req.params.guestGroupId
+				}
+			}))
+		}
+		return p.concat(guest.rsvps.map((rsvp) => {
+			return rp.put({
+				uri: WEDDING_URL+'/events/'+rsvp.wedding_event_id+'/guests/'+guest.id,
+				headers: getAislePlannerHeaders(true),
+				json: true,
+				body: rsvp
+			})
 		}))
-	}
+	}, [])
 	Promise.all(promises)
 	.then(function (results) {
 		res.send(results)
