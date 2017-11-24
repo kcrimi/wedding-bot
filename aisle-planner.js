@@ -224,8 +224,8 @@ router.get('/events', function (req,res) {
 	Promise.all(promises)
 	.then(function (results) {
 		const events = results[0]
-		const meals = results[1]
-		meals.map((meal) => {
+		var meals = results[1]
+		meals = meals.map((meal) => {
 			meal.description = meal.name
 			if (meal.description.toLowerCase().includes("chicken")) {
 				meal.name = "Chicken"
@@ -234,7 +234,11 @@ router.get('/events', function (req,res) {
 			} else {
 				meal.name = "Vegetarian"
 			}
+			return meal
+		}).sort((a,b) => {
+			return (a.name > b.name) ? 1 : (b.name > a.name ? -1 : 0)
 		})
+		console.log(meals)
 		for (var i = 0; i < events.length; i++) {
 			events[i].meal_options = _.filter(meals, meal => meal.wedding_event_id == events[i].id)
 		}
