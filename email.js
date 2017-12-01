@@ -1,10 +1,9 @@
 const Sendgrid = require("sendgrid")(process.env.SENDGRID_API_KEY);
 
 const sendNotification = () => {
-		sendEmail({
-		 	subject: "Alert - API Version Increased";
-			content: "Api version has been increased on AislePlanner.com. You can probably ignore this."
-		})
+	sendEmail({
+	 	subject: "Alert - API Version Increased",
+		content: "Api version has been increased on AislePlanner.com. You can probably ignore this."
 	});
 };
 
@@ -53,4 +52,4 @@ const sendEmail = (data) => {
 	  });
 }
 
-module.exports = {sendNotification}
+module.exports = {sendNotification, sendEmail}
