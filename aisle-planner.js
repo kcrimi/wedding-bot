@@ -14,7 +14,7 @@ const getAislePlannerHeaders = (withCookie) => {
 	    	'X-XSRF-TOKEN': '6defb5fe6bb0a6476a6b011857329c2617af2a0f',
 			'X-Requested-With': 'XMLHttpRequest',
 			// 'X-AP-API-Version': process.env.API_VERSION,
-	    };
+	    }
 	if (withCookie) {
 		aislePlannerHeaders.Cookie = 'session=' + sessionId
 	}
@@ -84,7 +84,7 @@ const updateSession = (res, versionCheck) => {
 		// if api version has been upped, sign in without it and notify me
 		if (err.statusCode == 412 && err.response.body.UPGRADE) {
 			console.log("API VERSION ERROR")
-	Emailer.sendNotification()
+			Emailer.sendNotification()
 			return updateSession(res, false)
 		}
 	})
@@ -216,11 +216,7 @@ router.get('/events', function (req,res) {
 		headers: getAislePlannerHeaders(true),
 		json: true
 	}))
-	promises.push(rp({
-		uri: WEDDING_URL+'/events?all_meal_options',
-		headers: getAislePlannerHeaders(true),
-		json: true
-	}))
+	promises.push(getAllMeals())
 	Promise.all(promises)
 	.then(function (results) {
 		const events = results[0]
@@ -250,7 +246,12 @@ router.get('/events', function (req,res) {
 })
 
 // Update rsvp status information
+<<<<<<< HEAD
 router.post('/rsvp/:guestGroupId', function (req, res) {
+=======
+router.post('/rsvp', function (req, res) {
+	console.log('jhere')
+>>>>>>> 3ccbaa1eceb26d923ded16fab260ef74931a95b5
 	const rsvps = req.body
 	const promises = rsvps.guests.reduce((p, guest) => {
 		if (guest.first_name && guest.last_name) {
@@ -278,10 +279,47 @@ router.post('/rsvp/:guestGroupId', function (req, res) {
 	Promise.all(promises)
 	.then(function (results) {
 		res.send(results)
+		Emailer.sendRsvpEmail(rsvps)
 	})
 	.catch(function (err) {
 		console.log(err)
 	})
+})
+
+router.post('/tester', function (req, res) {
+	const rsvpGroup = req.body
+	Promise.all([getAllUsers(), getAllMealOptions()])
+	.then((results) => {
+		[guests, mealOptions] = results
+		const fullGuests = rsvpGroup.guests.map((rsvpGuest) => {
+			const guestRecord = guests.find((guest) => {
+				return guest.id == rsvpGuest.id
+			})
+			guestRecord.rsvp = rsvpGuest.rsvps[0].attending_status
+			guestRecord.mealName = rsvpGuest.rsvps.filter((rsvp) => {
+				return rsvp.meal_option_id || rsvp.meal_declined
+			}).reduce((output, rsvp) => {
+				if (rsvp.meal_declined) {
+					return "Declined"
+				} else {
+					return mealOptions.find((mealOption) => {
+						return mealOption.id === rsvp.meal_option_id
+					}).name
+				}
+			},"")
+			return guestRecord;
+		})
+		return {
+			name: groupDisplayName(fullGuests),
+			guests: fullGuests
+		}
+
+	}).then((payload) => {
+		return Emailer.sendRsvpEmail(payload)
+	}).then(() => {
+		res.send("sent!")
+	})
+	
 })
 
 // Get all guests
@@ -290,6 +328,15 @@ const getAllUsers = () => {
 	    uri: WEDDING_URL+'/guests',
 	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
+	})
+}
+
+// Get all meal options
+const getAllMealOptions = () => {
+	return rp({
+		uri: WEDDING_URL+'/events?all_meal_options',
+		headers: getAislePlannerHeaders(true),
+		json: true
 	})
 }
 
@@ -319,5 +366,9 @@ const groupDisplayName = (guests) => {
 		return andFamily ? name + " & Family" : name;
 	} 
 }
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
 
 module.exports = router;
