@@ -7,7 +7,7 @@ const sendNotification = () => {
 	})
 }
 
-const sendRsvpEmail = (rsvp) => {w
+const sendRsvpEmail = (rsvp) => {
 	const guestName = rsvp.name
 	const guests = rsvp.guests.length
 	const meals = rsvp.guests.reduce((output, guest) => {
