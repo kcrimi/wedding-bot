@@ -216,7 +216,7 @@ router.get('/events', function (req,res) {
 		headers: getAislePlannerHeaders(true),
 		json: true
 	}))
-	promises.push(getAllMeals())
+	promises.push(getAllMealOptions())
 	Promise.all(promises)
 	.then(function (results) {
 		const events = results[0]
@@ -246,12 +246,7 @@ router.get('/events', function (req,res) {
 })
 
 // Update rsvp status information
-<<<<<<< HEAD
 router.post('/rsvp/:guestGroupId', function (req, res) {
-=======
-router.post('/rsvp', function (req, res) {
-	console.log('jhere')
->>>>>>> 3ccbaa1eceb26d923ded16fab260ef74931a95b5
 	const rsvps = req.body
 	const promises = rsvps.guests.reduce((p, guest) => {
 		if (guest.first_name && guest.last_name) {
@@ -279,15 +274,14 @@ router.post('/rsvp', function (req, res) {
 	Promise.all(promises)
 	.then(function (results) {
 		res.send(results)
-		Emailer.sendRsvpEmail(rsvps)
+		transformRsvpForEmail(rsvps)
 	})
 	.catch(function (err) {
 		console.log(err)
 	})
 })
 
-router.post('/tester', function (req, res) {
-	const rsvpGroup = req.body
+const transformRsvpForEmail = (rsvpGroup) => {
 	Promise.all([getAllUsers(), getAllMealOptions()])
 	.then((results) => {
 		[guests, mealOptions] = results
@@ -296,17 +290,20 @@ router.post('/tester', function (req, res) {
 				return guest.id == rsvpGuest.id
 			})
 			guestRecord.rsvp = rsvpGuest.rsvps[0].attending_status
-			guestRecord.mealName = rsvpGuest.rsvps.filter((rsvp) => {
+			const mealRsvp = rsvpGuest.rsvps.find((rsvp) => {
 				return rsvp.meal_option_id || rsvp.meal_declined
-			}).reduce((output, rsvp) => {
-				if (rsvp.meal_declined) {
-					return "Declined"
+			})
+			if (mealRsvp) {
+				if (mealRsvp.meal_declined) {
+					guestRecord.mealName = "Declined"
 				} else {
-					return mealOptions.find((mealOption) => {
-						return mealOption.id === rsvp.meal_option_id
+					console.log(mealOptions)
+					console.log(mealRsvp.meal_option_id)
+					guestRecord.mealName = mealOptions.find((mealOption) => {
+						return mealOption.id == mealRsvp.meal_option_id
 					}).name
 				}
-			},"")
+			}
 			return guestRecord;
 		})
 		return {
@@ -316,11 +313,8 @@ router.post('/tester', function (req, res) {
 
 	}).then((payload) => {
 		return Emailer.sendRsvpEmail(payload)
-	}).then(() => {
-		res.send("sent!")
 	})
-	
-})
+}
 
 // Get all guests
 const getAllUsers = () => {
