@@ -345,7 +345,9 @@ const groupDisplayName = (guests) => {
 	if (guests.length == 1) {
 		return guests[0].first_name + " " + guests[0].last_name
 	} else {
-		const andFamily = guests.length >= 4 || _.filter(guests, (g) => {return g.is_anonymous}).length > 2
+		const andFamily = guests.filter((g) => {
+			return !g.is_anonymous;
+		}).length > 3;
 		const namedGuests = _.transform(guests, (out, g) => {
 			if (!g.is_anonymous) {
 				out.push(g)
