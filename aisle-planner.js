@@ -92,6 +92,16 @@ const updateSession = (res, versionCheck) => {
 
 // Get guest groups information
 router.get('/guests', function (req, res) {
+	getGuestGroups(req.query.includeAddress == 'true')
+	.then((groups) => {
+		res.send(groups)
+	}).catch(function (err) {
+    	console.log(err)
+        // API call failed... 
+    });
+})
+
+const getGuestGroups = (includeAddress) => {
 	console.log("START GUEST PULL")
 	const promises = []
 	promises.push(getAllUsers());
@@ -105,7 +115,7 @@ router.get('/guests', function (req, res) {
 		headers: getAislePlannerHeaders(true),
 		json: true
 	}))
-	Promise.all(promises)
+	return Promise.all(promises)
     .then(function (results) {
     	console.log("RESULTS")
     	const guests = results[0]
@@ -128,7 +138,7 @@ router.get('/guests', function (req, res) {
     			}),
     			guestList: ceremony_status ? ceremony_status.guest_list : null
     		}
-    		if (req.query.includeAddress == 'true') {
+    		if (includeAddress) {
     			payload.address = groupGuests[0].address
     			payload.email = groupGuests[0].email
     		}
@@ -137,13 +147,9 @@ router.get('/guests', function (req, res) {
     	console.log(response[0])
     	// const match = _.filter(groups, x => x.id === 1606652);
 
-    	res.send(_.filter(response, (x) => { return x.guestList == 1 }));
+    	return _.filter(response, (x) => { return x.guestList == 1 });
     })
-    .catch(function (err) {
-    	console.log(err)
-        // API call failed... 
-    });
-})
+}
 
 // Update a guest's address
 router.post('/guests/:userId/address', function (req, res) {

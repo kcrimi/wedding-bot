@@ -4,6 +4,7 @@ const app = express()
 const rp = require('request-promise')
 const bodyParser = require('body-parser')
 const aislePlannerRoute = require('./aisle-planner.js')
+const utilsRoute = require('./utils.js')
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -19,6 +20,9 @@ app.use(bodyParser.urlencoded({
 app.get('/awake', (req, res) => {
 	res.send('I\'m awake!')
 })
+
+app.use('/utils', utilsRoute)
+
 app.use('/', aislePlannerRoute)
 
 app.listen(process.env.PORT || 3000, function () {
