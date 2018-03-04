@@ -240,11 +240,13 @@ router.get('/events', function (req,res) {
 			}
 			return meal
 		}).sort((a,b) => {
-			return (a.name > b.name) ? 1 : (b.name > a.name ? -1 : 0)
+
+			return a.name > b.name && !b.name.toLowerCase().includes("kid") 
+				|| a.name.toLowerCase().includes("kid") ? 1 :  0
 		})
 		console.log(meals)
 		for (var i = 0; i < events.length; i++) {
-			events[i].meal_options = _.filter(meals, meal => meal.wedding_event_id == events[i].id)
+			events[i].meal_options = meals.filter((meal) => meal.wedding_event_id == events[i].id)
 		}
 		res.send(events)
 	})
