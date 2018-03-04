@@ -233,6 +233,8 @@ router.get('/events', function (req,res) {
 				meal.name = "Chicken"
 			} else if (meal.description.toLowerCase().includes("steak")) {
 				meal.name = "Beef"
+			} else if (meal.description.toLowerCase().includes("kid")) {
+				meal.name = "Kid's Meal"
 			} else {
 				meal.name = "Vegetarian"
 			}
