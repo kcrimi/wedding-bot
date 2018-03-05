@@ -136,7 +136,8 @@ const getGuestGroups = (includeAddress) => {
     			guests: groupGuests.map((guest) => {
     				return guest.id
     			}),
-    			guestList: ceremony_status ? ceremony_status.guest_list : null
+    			guestList: ceremony_status ? ceremony_status.guest_list : null,
+    			needs_rsvp: ceremony_status && ceremony_status.attending_status == null
     		}
     		if (includeAddress) {
     			payload.address = groupGuests[0].address
