@@ -300,7 +300,9 @@ const transformRsvpForEmail = (rsvpGroup) => {
 			const guestRecord = guests.find((guest) => {
 				return guest.id == rsvpGuest.id
 			})
-			guestRecord.rsvp = rsvpGuest.rsvps[0].attending_status
+			guestRecord.rsvp = rsvpGuest.rsvps.find((rsvp) => {
+				return DEV_CEREMONY_ID == rsvp.wedding_event_id || CEREMONY_ID == rsvp.wedding_event_id
+			}).attending_status
 			const mealRsvp = rsvpGuest.rsvps.find((rsvp) => {
 				return rsvp.meal_option_id || rsvp.meal_declined
 			})
