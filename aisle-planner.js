@@ -92,7 +92,7 @@ const updateSession = (res, versionCheck) => {
 
 // Get guest groups information
 router.get('/guests', function (req, res) {
-	getGuestGroups(req.query.includeAddress == 'true')
+	getGuestGroups(req.query.includeAddress == 'true', req.query.includeRelationship == 'true')
 	.then((groups) => {
 		res.send(groups)
 	}).catch(function (err) {
@@ -101,10 +101,10 @@ router.get('/guests', function (req, res) {
     });
 })
 
-const getGuestGroups = (includeAddress) => {
+const getGuestGroups = (includeAddress, includeRelationship) => {
 	console.log("START GUEST PULL")
 	const promises = []
-	promises.push(getAllUsers());
+	promises.push(getAllUsers())
 	promises.push(rp({
 	    uri: WEDDING_URL+'/guest_groups',
 	    headers: getAislePlannerHeaders(true),
@@ -115,12 +115,16 @@ const getGuestGroups = (includeAddress) => {
 		headers: getAislePlannerHeaders(true),
 		json: true
 	}))
+	if (includeRelationship) {
+		promises.push(getAllRelationships())
+	}
 	return Promise.all(promises)
     .then(function (results) {
     	console.log("RESULTS")
     	const guests = results[0]
     	const groups = results[1]
     	const ceremony_statuses = _.filter(results[2], (x) => {return DEV_CEREMONY_ID == x.wedding_event_id || CEREMONY_ID == x.wedding_event_id})
+    	const guest_relationships = results[3]
     	const response = groups.map((group) => {
     		groupGuests = _.filter(guests, guest => guest.group_id === group.id)
     		groupGuests = _.sortBy(groupGuests, 'group_order');
@@ -138,10 +142,17 @@ const getGuestGroups = (includeAddress) => {
     			}),
     			guestList: ceremony_status ? ceremony_status.guest_list : null,
     			needs_rsvp: ceremony_status && ceremony_status.attending_status == null
+
     		}
     		if (includeAddress) {
     			payload.address = groupGuests[0].address
     			payload.email = groupGuests[0].email
+    		}
+    		if (includeRelationship) {
+    			const relationship = guest_relationships.find((relationship) => {
+					return group.relationship_id == relationship.id
+				})
+    			payload.relationship = relationship ? relationship.name : null
     		}
     		return payload
     	})
@@ -342,6 +353,15 @@ const getAllUsers = () => {
 const getAllMealOptions = () => {
 	return rp({
 		uri: WEDDING_URL+'/events?all_meal_options',
+		headers: getAislePlannerHeaders(true),
+		json: true
+	})
+}
+
+// Get guest relationships
+const getAllRelationships = () => {
+	return rp({
+		uri: WEDDING_URL+'/guest_relationships',
 		headers: getAislePlannerHeaders(true),
 		json: true
 	})
