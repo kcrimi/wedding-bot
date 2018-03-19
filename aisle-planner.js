@@ -110,11 +110,7 @@ const getGuestGroups = (includeAddress, includeRelationship) => {
 	    headers: getAislePlannerHeaders(true),
 	    json: true // Automatically parses the JSON string in the response 
 	}));
-	promises.push(rp({
-		uri: WEDDING_URL+'/events?all_event_guests',
-		headers: getAislePlannerHeaders(true),
-		json: true
-	}))
+	promises.push(getAllRsvps())
 	if (includeRelationship) {
 		promises.push(getAllRelationships())
 	}
@@ -123,15 +119,16 @@ const getGuestGroups = (includeAddress, includeRelationship) => {
     	console.log("RESULTS")
     	const guests = results[0]
     	const groups = results[1]
-    	const ceremony_statuses = _.filter(results[2], (x) => {return DEV_CEREMONY_ID == x.wedding_event_id || CEREMONY_ID == x.wedding_event_id})
+    	guests.forEach((guest) => {
+    		guest.rsvp = results[2].find((rsvp) => {
+    			return guest.id == rsvp.wedding_guest_id &&
+    				(DEV_CEREMONY_ID == rsvp.wedding_event_id || CEREMONY_ID == rsvp.wedding_event_id)
+    		})
+    	})
     	const guest_relationships = results[3]
     	const response = groups.map((group) => {
     		groupGuests = _.filter(guests, guest => guest.group_id === group.id)
     		groupGuests = _.sortBy(groupGuests, 'group_order');
-    		const ceremony_status = _.chain(ceremony_statuses)
-    							.filter((x) => { return x.wedding_guest_id == groupGuests[0].id })
-    							.first()
-    							.value()
     		const payload = {
     			id: group.id,
     			rsvp_id: group.rsvp_id,
@@ -140,9 +137,14 @@ const getGuestGroups = (includeAddress, includeRelationship) => {
     			guests: groupGuests.map((guest) => {
     				return guest.id
     			}),
-    			guestList: ceremony_status ? ceremony_status.guest_list : null,
-    			needs_rsvp: ceremony_status && ceremony_status.attending_status == null
-
+    			guestList: groupGuests[0].rsvp ? groupGuests[0].rsvp.guest_list : null,
+    			needs_rsvp: groupGuests[0].rsvp && groupGuests[0].rsvp.attending_status == null,
+    			attendingCount: groupGuests.reduce((attendingCount, guest) => {
+    				if (guest.rsvp && guest.rsvp.attending_status == "attending") {
+    					attendingCount++
+    				}
+    				return attendingCount
+    			}, 0)
     		}
     		if (includeAddress) {
     			payload.address = groupGuests[0].address
@@ -154,9 +156,10 @@ const getGuestGroups = (includeAddress, includeRelationship) => {
 				})
     			payload.relationship = relationship ? relationship.name : null
     		}
+
     		return payload
     	})
-    	console.log(response[0])
+    	console.log(response[10])
     	// const match = _.filter(groups, x => x.id === 1606652);
 
     	return _.filter(response, (x) => { return x.guestList == 1 });
