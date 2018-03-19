@@ -206,11 +206,7 @@ router.get('/rsvp/:guestGroupId', function (req, res) {
 	const groupId = req.params.guestGroupId
 	const promises = []
 	promises.push(getAllUsers())
-	promises.push(rp({
-		uri: WEDDING_URL+'/events?all_event_guests',
-		headers: getAislePlannerHeaders(true),
-		json: true
-	}))
+	promises.push(getAllRsvps())
 	Promise.all(promises)
 	.then(function (results) {
 		var guests = results[0]
@@ -362,6 +358,15 @@ const getAllMealOptions = () => {
 const getAllRelationships = () => {
 	return rp({
 		uri: WEDDING_URL+'/guest_relationships',
+		headers: getAislePlannerHeaders(true),
+		json: true
+	})
+}
+
+// Get all RSVPs 
+const getAllRsvps = () => {
+	return rp({
+		uri: WEDDING_URL+'/events?all_event_guests',
 		headers: getAislePlannerHeaders(true),
 		json: true
 	})
