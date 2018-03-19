@@ -139,7 +139,7 @@ const getGuestGroups = (includeAddress, includeRelationship) => {
     			}),
     			guestList: groupGuests[0].rsvp ? groupGuests[0].rsvp.guest_list : null,
     			needs_rsvp: groupGuests[0].rsvp && groupGuests[0].rsvp.attending_status == null,
-    			attendingCount: groupGuests.reduce((attendingCount, guest) => {
+    			attending_count: groupGuests.reduce((attendingCount, guest) => {
     				if (guest.rsvp && guest.rsvp.attending_status == "attending") {
     					attendingCount++
     				}
