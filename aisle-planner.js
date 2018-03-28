@@ -240,12 +240,12 @@ router.get('/events', function (req,res) {
 		var meals = results[1]
 		meals = meals.map((meal) => {
 			meal.description = meal.name
-			if (meal.description.toLowerCase().includes("chicken")) {
+			if (meal.description.toLowerCase().includes("kid")) {
+				meal.name = "Kid's Meal"
+			else if (meal.description.toLowerCase().includes("chicken")) {
 				meal.name = "Chicken"
 			} else if (meal.description.toLowerCase().includes("steak")) {
 				meal.name = "Beef"
-			} else if (meal.description.toLowerCase().includes("kid")) {
-				meal.name = "Kid's Meal"
 			} else {
 				meal.name = "Vegetarian"
 			}
