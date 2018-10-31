@@ -62,8 +62,8 @@ const updateSession = (res, versionCheck) => {
 		json: true,
 		resolveWithFullResponse: true,
 		body: {
-			"username": process.env.USERNAME,
-			"password": process.env.PASSWORD
+			"username": process.env.AISLE_PLANNER_USERNAME,
+			"password": process.env.AISLE_PLANNER_PASSWORD
 		}
 	})
 	.then(function (response) {
