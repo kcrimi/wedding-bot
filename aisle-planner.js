@@ -13,7 +13,7 @@ const getAislePlannerHeaders = (withCookie) => {
 	const aislePlannerHeaders = {
 	    	'X-XSRF-TOKEN': '6defb5fe6bb0a6476a6b011857329c2617af2a0f',
 			'X-Requested-With': 'XMLHttpRequest',
-			// 'X-AP-API-Version': process.env.API_VERSION,
+			// 'X-AP-API-Version': process.env.API_VERSION, // commented this out because Aisle Planner changes min version too often and it never seems to break if I leave it unspecified
 	    }
 	if (withCookie) {
 		aislePlannerHeaders.Cookie = 'session=' + sessionId
@@ -22,28 +22,28 @@ const getAislePlannerHeaders = (withCookie) => {
 }
 
 router.get('/', function (req, res) {
-  res.send("Hello World")
+  res.send("Looks like your wedding bot instance is working!")
 })
 
-// Check if session is valid
+// Check if session is valid using the user's checkin endpoint.
 router.use(function (req, res, next) {
-	console.log("KEVIN CHECK")
+	console.log("STARTING SESSION CHECK")
 	rp({
 		uri: BASE_URL+'/notifications/checkin',
 		headers: getAislePlannerHeaders(true),
 		json: true
 	})
 	.then(function (response) {
-		console.log('CHECKINS PASSED')
+		console.log('Session is valid')
 		return
 	}, function (error) {
-		console.log("KEVIN NOT LOGGED IN")
+		console.log("No user logged in")
 		if (error.statusCode != 401) {
 			res.status(error.statusCode).send(error)
 		}
 		return updateSession(res, true)
 	})
-	.then(function () { next() })
+	.then(function () { next() }) // could probably move this up to to line 37?
 	.catch(function (err) {
 		console.log(err)
 		res.status(500).send(err)
@@ -51,7 +51,7 @@ router.use(function (req, res, next) {
 })
 
 const updateSession = (res, versionCheck) => {
-	console.log("KEVIN NEW SESSION REQUEST")
+	console.log("STARTING LOGIN ATTEMPT")
 	headers = getAislePlannerHeaders(false)
 	if (versionCheck) {
 		headers['X-AP-API-Version'] = process.env.API_VERSION
@@ -67,7 +67,7 @@ const updateSession = (res, versionCheck) => {
 		}
 	})
 	.then(function (response) {
-		console.log("PARSE COOKIES")
+		console.log("Getting the session Id from the cookie")
 		console.log(setCookie.parse(response))
 		const cookies = setCookie.parse(response)
 		for (var i = 0; i < cookies.length; i++ ) {
@@ -82,6 +82,10 @@ const updateSession = (res, versionCheck) => {
 		throw("Error renewing session")
 	}, function (err) {
 		// if api version has been upped, sign in without it and notify me
+		/*
+		 NOTE: it seems that Aisle Planner ups the min version with every deploy despite them not being breaking changes.
+		 Annoyingly, it blocks calls with an old version but allows calls with no version. I've had no crashes using the version-less calls though
+		*/
 		if (err.statusCode == 412 && err.response.body.UPGRADE) {
 			console.log("API VERSION ERROR")
 			Emailer.sendNotification()
@@ -104,12 +108,8 @@ router.get('/guests', function (req, res) {
 const getGuestGroups = (includeAddress, includeRelationship) => {
 	console.log("START GUEST PULL")
 	const promises = []
-	promises.push(getAllUsers())
-	promises.push(rp({
-	    uri: WEDDING_URL+'/guest_groups',
-	    headers: getAislePlannerHeaders(true),
-	    json: true // Automatically parses the JSON string in the response 
-	}));
+	promises.push(getAllGuests())
+	promises.push(getAllGuestGroups());
 	promises.push(getAllRsvps())
 	if (includeRelationship) {
 		promises.push(getAllRelationships())
@@ -117,18 +117,25 @@ const getGuestGroups = (includeAddress, includeRelationship) => {
 	return Promise.all(promises)
     .then(function (results) {
     	console.log("RESULTS")
+
     	const guests = results[0]
     	const groups = results[1]
     	guests.forEach((guest) => {
+    		// Add the rsvp status to each guest
     		guest.rsvp = results[2].find((rsvp) => {
     			return guest.id == rsvp.wedding_guest_id &&
     				(DEV_CEREMONY_ID == rsvp.wedding_event_id || CEREMONY_ID == rsvp.wedding_event_id)
     		})
     	})
     	const guest_relationships = results[3]
+
     	const response = groups.map((group) => {
+    		// Find the guests that are part of this guest group
     		groupGuests = _.filter(guests, guest => guest.group_id === group.id)
+
+    		// Sort the guests by their group order so +1s and children, etc end up last
     		groupGuests = _.sortBy(groupGuests, 'group_order');
+
     		const payload = {
     			id: group.id,
     			rsvp_id: group.rsvp_id,
@@ -159,8 +166,9 @@ const getGuestGroups = (includeAddress, includeRelationship) => {
 
     		return payload
     	})
-    	console.log(response[10])
-    	// const match = _.filter(groups, x => x.id === 1606652);
+
+    	// Print out a group just to see some output
+    	console.log(response[0])
 
     	return _.filter(response, (x) => { return x.guestList == 1 });
     })
@@ -168,35 +176,27 @@ const getGuestGroups = (includeAddress, includeRelationship) => {
 
 // Update a guest's address
 router.post('/guests/:userId/address', function (req, res) {
-	const userId = req.params.userId;
-	rp({
-	    uri: WEDDING_URL+'/guests/'+userId,
-	    headers: getAislePlannerHeaders(true),
-	    json: true // Automatically parses the JSON string in the response 
-	}).then(function (user) {
+	console.log("START UPDATE ADDRESS")
+	const guestId = req.params.userId;
+	getGuestGroup(guestId)
+	.then(function (guest) {
 		if (req.body.phone_number) {
-			user.phone_number = req.body.phone_number
+			guest.phone_number = req.body.phone_number
 		}
 		if (req.body.email) {
-			user.email = req.body.email
+			guest.email = req.body.email
 		}
 		if (req.body.address) {
-			user.address.street = req.body.address.street || ''
-			user.address.extended = req.body.address.extended || ''
-			user.address.city = req.body.address.city || ''
-			user.address.region = req.body.address.region || ''
-			user.address.postcode = req.body.address.postcode || ''
-			user.address.country = req.body.address.country || ''
+			guest.address.street = req.body.address.street || ''
+			guest.address.extended = req.body.address.extended || ''
+			guest.address.city = req.body.address.city || ''
+			guest.address.region = req.body.address.region || ''
+			guest.address.postcode = req.body.address.postcode || ''
+			guest.address.country = req.body.address.country || ''
 		}
-		return user
-	}).then(function (user) {
-		return rp.put({
-			uri: WEDDING_URL+'/guests/'+userId,
-			headers: getAislePlannerHeaders(true),
-			json: true,
-			body: user
-		})
-	}).then(function (response) {
+		return guest
+	}).then(updateGuest(guestId, guest))
+	.then(function (response) {
 		res.send(response)
 	}).catch(function (err) {
 		console.log(err)
@@ -208,7 +208,7 @@ router.post('/guests/:userId/address', function (req, res) {
 router.get('/rsvp/:guestGroupId', function (req, res) {
 	const groupId = req.params.guestGroupId
 	const promises = []
-	promises.push(getAllUsers())
+	promises.push(getAllGuests())
 	promises.push(getAllRsvps())
 	Promise.all(promises)
 	.then(function (results) {
@@ -225,19 +225,20 @@ router.get('/rsvp/:guestGroupId', function (req, res) {
 	})
 })
 
-// Get basic information for all events
+// Get basic information for all events including their meal options
 router.get('/events', function (req,res) {
+	console.log("START EVENT CALL")
 	const promises = []
-	promises.push(rp({
-		uri: WEDDING_URL+'/events',
-		headers: getAislePlannerHeaders(true),
-		json: true
-	}))
+	promises.push(getAllEvents())
 	promises.push(getAllMealOptions())
 	Promise.all(promises)
 	.then(function (results) {
 		const events = results[0]
 		var meals = results[1]
+		/*
+		 Map the description in Aisle Planner to a simplified name for UI drop downs, etc
+		 NOTE: THIS IS HIGHLY DEPENDENT ON YOUR MEAL DATA
+		 */
 		meals = meals.map((meal) => {
 			meal.description = meal.name
 			if (meal.description.toLowerCase().includes("kid")) {
@@ -251,7 +252,7 @@ router.get('/events', function (req,res) {
 			}
 			return meal
 		}).sort((a,b) => {
-
+			// Sort alphabetically but keep kids meals on the bottom
 			return a.name > b.name && !b.name.toLowerCase().includes("kid") 
 				|| a.name.toLowerCase().includes("kid") ? 1 :  0
 		})
@@ -268,48 +269,44 @@ router.get('/events', function (req,res) {
 
 // Update rsvp status information
 router.post('/rsvp/:guestGroupId', function (req, res) {
+	console.log("START UPDATE RSVP")
 	const rsvps = req.body
 	const promises = rsvps.guests.reduce((p, guest) => {
+		// If we receive a guest name, we can assume that we want to update the name
 		if (guest.first_name && guest.last_name) {
-			 p.push(rp.put({
-				uri: WEDDING_URL+'/guests/'+guest.id,
-				headers: getAislePlannerHeaders(true),
-				json: true,
-				body: {
+			updatedGuest = {
 					first_name: guest.first_name,
 					last_name: guest.last_name,
 					is_anonymous: false,
 					group_id: req.params.guestGroupId
 				}
-			}))
+			 p.push(updateGuest(guest.id, updatedGuest))
 		}
 		return p.concat(guest.rsvps.map((rsvp) => {
-			return rp.put({
-				uri: WEDDING_URL+'/events/'+rsvp.wedding_event_id+'/guests/'+guest.id,
-				headers: getAislePlannerHeaders(true),
-				json: true,
-				body: rsvp
-			})
+			return updateRsvp(guest.id, rsvp)
 		}))
 	}, [])
 	Promise.all(promises)
 	.then(function (results) {
 		res.send(results)
-		transformRsvpForEmail(rsvps)
+		notfifyNewRsvpReceived(rsvps)
 	})
 	.catch(function (err) {
 		console.log(err)
 	})
 })
 
-const transformRsvpForEmail = (rsvpGroup) => {
-	Promise.all([getAllUsers(), getAllMealOptions()])
+// Convenience method to notify you when someone RSVPs through the API so you can spy on them
+const notfifyNewRsvpReceived = (rsvpGroup) => {
+	console.log("START RSVP NOTIFICATION")
+	Promise.all([getAllGuests(), getAllMealOptions()])
 	.then((results) => {
 		[guests, mealOptions] = results
 		const fullGuests = rsvpGroup.guests.map((rsvpGuest) => {
 			const guestRecord = guests.find((guest) => {
 				return guest.id == rsvpGuest.id
 			})
+			// We just want the ceremony ID for our display, not any of the side events
 			guestRecord.rsvp = rsvpGuest.rsvps.find((rsvp) => {
 				return DEV_CEREMONY_ID == rsvp.wedding_event_id || CEREMONY_ID == rsvp.wedding_event_id
 			}).attending_status
@@ -339,8 +336,11 @@ const transformRsvpForEmail = (rsvpGroup) => {
 	})
 }
 
+
+// ##########  NETWORK CALLS ##############
+
 // Get all guests
-const getAllUsers = () => {
+const getAllGuests = () => {
 	return rp({
 	    uri: WEDDING_URL+'/guests',
 	    headers: getAislePlannerHeaders(true),
@@ -348,6 +348,39 @@ const getAllUsers = () => {
 	})
 }
 
+const getAllGuestGroups = () => {
+	return rp({
+	    uri: WEDDING_URL+'/guest_groups',
+	    headers: getAislePlannerHeaders(true),
+	    json: true // Automatically parses the JSON string in the response 
+	})
+}
+
+const getGuestGroup = (guestId) => {
+	return rp({
+	    uri: WEDDING_URL+'/guests/'+guestId,
+	    headers: getAislePlannerHeaders(true),
+	    json: true // Automatically parses the JSON string in the response 
+	})
+}
+
+const updateGuest = (guestId, guest) => {
+	rp.put({
+		uri: WEDDING_URL+'/guests/'+guestId,
+		headers: getAislePlannerHeaders(true),
+		json: true,
+		body: guest
+	})
+}
+
+// Get all meal options
+const getAllEvents = () => {
+	return rp({
+		uri: WEDDING_URL+'/events',
+		headers: getAislePlannerHeaders(true),
+		json: true
+	})
+}
 // Get all meal options
 const getAllMealOptions = () => {
 	return rp({
@@ -375,27 +408,48 @@ const getAllRsvps = () => {
 	})
 }
 
-// Calculate the display name based on the the guests in the group
+const updateRsvp = (guestId, rsvp) => {
+	return rp.put({
+		uri: WEDDING_URL+'/events/'+rsvp.wedding_event_id+'/guests/'+guestId,
+		headers: getAislePlannerHeaders(true),
+		json: true,
+		body: rsvp
+	})
+}
+
+// Complicated string builder to calculate the display name based on the the guests in the group
 const groupDisplayName = (guests) => {
 	if (guests.length == 1) {
+		// Only 1 guest: "Rick Grimes"
 		return guests[0].first_name + " " + guests[0].last_name
 	} else {
+		// Boolean whether there's more than 3 named guests in the group
 		const andFamily = guests.filter((g) => {
+			// No +1s included
 			return !g.is_anonymous;
 		}).length > 3;
+
+		// The array of guests to be used in generating the display name
 		const namedGuests = _.transform(guests, (out, g) => {
 			if (!g.is_anonymous) {
 				out.push(g)
 			}
+			// Only take 2 users: Rick and Carl Grimes
+			// unless there are more than 3, in which case just 1: Mike Brady & Family
 			return out.length < 3 && !(out.length == 2 && andFamily)
 		}, [] )
+
+
 		var name = _.reduce(namedGuests, (out, g, i, array) => {
-			const lastOfName = (i == array.length - 1 || g.last_name != array[i + 1].last_name)
+			// We only want to add the last name to the final user with it so this boolean helps
+			const lastUserOfCurrentLastName = (i == array.length - 1 || g.last_name != array[i + 1].last_name)
 			if (i > 0) {
-				out += lastOfName ? " & " : ", "
+				// Only add & if it's the final guest of the name: Alec, Billy & >Stephen< Baldwin
+				out += lastUserOfCurrentLastName ? " & " : ", "
 			}
 			out += g.first_name
-			if (lastOfName) {
+			if (lastUserOfCurrentLastName) {
+				// Finally add the guests' last name
 				out = out + " " + g.last_name
 			}
 			return out

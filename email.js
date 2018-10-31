@@ -7,6 +7,7 @@ const sendNotification = () => {
 	})
 }
 
+// Sends email notifying you of a guest's rsvp
 const sendRsvpEmail = (rsvp) => {
 	const guestName = rsvp.name
 	const guests = rsvp.guests.length
@@ -44,6 +45,7 @@ const sendRsvpEmail = (rsvp) => {
 	})
 }
 
+// Generic Network call to send an email
 const sendEmail = (data) => {
 	const toEmail = data.toEmail || process.env.USERNAME
 	const fromEmail = data.fromEmail || "alert@WeddingBot.com"

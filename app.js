@@ -17,6 +17,7 @@ app.use(bodyParser.urlencoded({
 	extended: true
 }))
 
+// Just a dummy endpoint to call to keep the instance alive
 app.get('/awake', (req, res) => {
 	res.send('I\'m awake!')
 })
@@ -29,6 +30,7 @@ app.listen(process.env.PORT || 3000, function () {
   console.log('Example app listening on port 3000!')
 })
 
+// A Hack to get Heroku to not sleep our instance
 setInterval(function() {
     rp({uri:"https://aisle-planner.herokuapp.com/awake"})
 }, 600000) // every 10 minutes (600000)
