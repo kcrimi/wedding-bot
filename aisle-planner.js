@@ -4,8 +4,7 @@ const setCookie = require('set-cookie-parser')
 const _ = require('lodash')
 const BASE_URL = 'https://www.aisleplanner.com/api'
 const WEDDING_URL = BASE_URL + '/wedding/'+process.env.WEDDING_ID
-const DEV_CEREMONY_ID = '194062'
-const CEREMONY_ID = '203464'
+const CEREMONY_ID = process.env.CEREMONY_ID
 const Emailer = require('./email.js')
 var sessionId
 
@@ -123,8 +122,7 @@ const getGuestGroups = (includeAddress, includeRelationship) => {
     	guests.forEach((guest) => {
     		// Add the rsvp status to each guest
     		guest.rsvp = results[2].find((rsvp) => {
-    			return guest.id == rsvp.wedding_guest_id &&
-    				(DEV_CEREMONY_ID == rsvp.wedding_event_id || CEREMONY_ID == rsvp.wedding_event_id)
+    			return guest.id == rsvp.wedding_guest_id && CEREMONY_ID == rsvp.wedding_event_id
     		})
     	})
     	const guest_relationships = results[3]
@@ -308,7 +306,7 @@ const notfifyNewRsvpReceived = (rsvpGroup) => {
 			})
 			// We just want the ceremony ID for our display, not any of the side events
 			guestRecord.rsvp = rsvpGuest.rsvps.find((rsvp) => {
-				return DEV_CEREMONY_ID == rsvp.wedding_event_id || CEREMONY_ID == rsvp.wedding_event_id
+				return CEREMONY_ID == rsvp.wedding_event_id
 			}).attending_status
 			const mealRsvp = rsvpGuest.rsvps.find((rsvp) => {
 				return rsvp.meal_option_id || rsvp.meal_declined
