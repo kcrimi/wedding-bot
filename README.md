@@ -37,9 +37,7 @@ You can have different events in your wedding but Aisle Planner will auto-genera
 
 If this is a bad assumption for you, then you probably want to check out code that uses CEREMONY_ID
 
-To find your ceremony id, on Aisple Planner, navigate to the `GUESTS` tab and make sure you have `CEREMONY` selected in the drop down like below
-
-TODO insert image
+To find your ceremony id, on Aisple Planner, navigate to the `GUESTS` tab and make sure you have `CEREMONY` selected in the drop down in the middle of the page.
 
 Set the CEREMONY_ID to the value found in the url
 `https://www.aisleplanner.com/app/project/{WEDDING_ID}/tools/guests/event/{CEREMONY_ID}`
@@ -61,6 +59,25 @@ One drawback is that the free tier will sleep instances that are idle for too lo
 
 Once you set this up, you should set your production environment variables in your heroku instance. I've written an [article using environment variables](http://tech.kevincrimi.com/blog/2017/11/13/parse-secrets/) that might help
 
+## Example Usages
+You can see some example usages of the code in my wedding site in the links below
+
+### RSVP and Address Changing
+[RSVP (HTML)](https://github.com/kcrimi/wedding_site/blob/master/_includes/rsvp.html)
+ 
+[Changing Address (HTML)](https://github.com/kcrimi/wedding_site/blob/master/_includes/mailing.html)
+
+[Api calls (JS)](https://github.com/kcrimi/wedding_site/blob/master/js/guest-suggestions.js)
+
+### Misc Data Views
+[CSV data dump](https://github.com/kcrimi/wedding_site/blob/master/_includes/email-list.html)
+
+[Unresponded Guests](https://github.com/kcrimi/wedding_site/blob/master/_includes/status-check.html)
+
+[Api Calls (JS)](https://github.com/kcrimi/wedding_site/blob/master/js/status-check_v1.2.js)
+
+
 ## Questions / Comments
 Feel free to comment on this repo or email me at kevin(at)kevincrimi.com
+
 Copyright © 2017 kcrimi
