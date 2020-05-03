@@ -31,6 +31,6 @@ app.listen(process.env.PORT || 3000, function () {
 })
 
 // A Hack to get Heroku to not sleep our instance
-setInterval(function() {
-    rp({uri:"https://aisle-planner.herokuapp.com/awake"})
-}, 600000) // every 10 minutes (600000)
+// setInterval(function() {
+//     rp({uri:"https://aisle-planner.herokuapp.com/awake"})
+// }, 600000) // every 10 minutes (600000)
