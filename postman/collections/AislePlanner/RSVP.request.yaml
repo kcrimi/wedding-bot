@@ -1,0 +1,31 @@
+$kind: http-request
+url: https://www.aisleplanner.com/api/wedding/{{WEDDING_ID}}/events/194065/guests/2873944
+method: PUT
+headers:
+  - key: X-XSRF-TOKEN
+    value: 6defb5fe6bb0a6476a6b011857329c2617af2a0f
+  - key: X-Requested-With
+    value: XMLHttpRequest
+  - key: X-AP-API-Version
+    value: 2017-06-13
+    disabled: true
+  - key: Cookie
+    value: session={{SESSION}}
+    disabled: true
+body:
+  type: text
+  content: |-
+    {
+    	"wedding_event_id": 194065,
+    	"invitation_sent_on": null,
+    	"guest_list": 1,
+    	"meal_declined": false,
+    	"requires_transportation": false,
+    	"wedding_guest_id": 2873944,
+    	"notes": "",
+    	"responded_on": null,
+    	"attending_status": "attending",
+    	"meal_option_id": null,
+    	"_effective_meal_option_id": null
+    }
+order: 3000

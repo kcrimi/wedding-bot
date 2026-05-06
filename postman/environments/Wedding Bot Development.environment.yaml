@@ -1,0 +1,28 @@
+owner: "546813"
+team: "185691"
+lastUpdatedBy: "546813"
+lastRevision: 1541085389000
+name: Wedding Bot Development
+color: null
+values:
+  - key: SERVER_URL
+    value: localhost:3000
+    enabled: true
+  - key: WEDDING_ID
+    value: ""
+    enabled: true
+    description: ""
+  - key: CEREMONY_ID
+    value: ""
+    enabled: true
+    description: ""
+  - key: AISLE_PLANNER_USERNAME
+    value: ""
+    enabled: true
+    description: ""
+  - key: AISLE_PLANNER_PASSWORD
+    value: ""
+    enabled: true
+    description: ""
+createdAt: 2017-06-16T02:26:35.000Z
+updatedAt: 2018-11-01T15:16:29.000Z

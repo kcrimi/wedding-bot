@@ -1,0 +1,52 @@
+$kind: http-request
+url: https://www.aisleplanner.com/api/wedding/{{WEDDING_ID}}/guests/2855085
+method: PUT
+headers:
+  - key: X-XSRF-TOKEN
+    value: 6defb5fe6bb0a6476a6b011857329c2617af2a0f
+  - key: X-Requested-With
+    value: XMLHttpRequest
+  - key: X-AP-API-Version
+    value: 2017-06-13
+    disabled: true
+  - key: Cookie
+    value: session={{SESSION}}
+    disabled: true
+  - key: Content-Type
+    value: application/json
+body:
+  type: text
+  content: |-
+    {
+    	"contact_id": 2384071,
+    	"food_alergies": null,
+    	"notes": "",
+    	"gender": "M",
+    	"title": "",
+    	"is_anonymous": false,
+    	"suffix": "",
+    	"last_name": "Crimi",
+    	"wedding_id": 43499,
+    	"first_name": "Kevin",
+    	"group_order": 0,
+    	"id": 2855085,
+    	"age_group": null,
+    	"group_id": 1462937,
+    	"needs_highchair": false,
+    	"needs_wheelchair": false,
+    	"address": {
+    		"region": "NY",
+    		"country": "USA",
+    		"subregion": null,
+    		"extended": "Apt 3",
+    		"city": "New York City",
+    		"id": 2183777,
+    		"metro_area_id": null,
+    		"po_box": null,
+    		"postcode": "10013",
+    		"street": "38 Grand street"
+    	},
+    	"role": "groom",
+    	"is_primary_guest": true
+    }
+order: 8000

@@ -1,0 +1,26 @@
+$kind: http-request
+url: https://www.aisleplanner.com/api/notifications/checkin
+method: GET
+headers:
+  - key: X-XSRF-TOKEN
+    value: 6defb5fe6bb0a6476a6b011857329c2617af2a0f
+    disabled: true
+  - key: X-Requested-With
+    value: XMLHttpRequest
+  - key: X-AP-API-Version
+    value: 2017-06-13
+    disabled: true
+  - key: Cookie
+    value: session=7475d96b19fc02c72cc1b4e6ba9307250a819f8egAJVKDFjODQwNzkzNGFlN2Q2MmUyOWQ0MjQyMWM1YmI0MjFmYTljOTQ0YTNxAS4=
+    disabled: true
+  - key: Content-Type
+    value: application/json
+    disabled: true
+body:
+  type: text
+  content: |-
+    {
+      "username": "keivn@choicolateicecrimi.com",
+      "password": "aisleplanner123"
+    }
+order: 10000

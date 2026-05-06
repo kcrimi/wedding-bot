@@ -1,0 +1,15 @@
+$kind: http-request
+url: https://www.aisleplanner.com/api/wedding/{{WEDDING_ID}}/guest_groups
+method: GET
+headers:
+  - key: X-XSRF-TOKEN
+    value: 6defb5fe6bb0a6476a6b011857329c2617af2a0f
+  - key: X-Requested-With
+    value: XMLHttpRequest
+  - key: X-AP-API-Version
+    value: 2017-06-13
+    disabled: true
+  - key: Cookie
+    value: session={{SESSION}}
+    disabled: true
+order: 4000

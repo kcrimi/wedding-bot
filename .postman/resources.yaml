@@ -1,0 +1,16 @@
+workspace:
+  id: 0120082f-57bc-457e-b861-fd2a7265bbf9
+localResources:
+  collections:
+    - ../postman/collections/AislePlanner
+    - ../postman/collections/WeddingBot
+  environments:
+    - ../postman/environments/Wedding Bot Production.environment.yaml
+    - ../postman/environments/Wedding Bot Development.environment.yaml
+cloudResources:
+  collections:
+    ../postman/collections/AislePlanner: 546813-5925f47c-5474-8355-25d8-84e82689498e
+    ../postman/collections/WeddingBot: 546813-c85af279-8ec4-2ac4-0ae9-408e3433f991
+  environments:
+    ../postman/environments/Wedding Bot Production.environment.yaml: 546813-4610234a-488d-402b-9ccb-28d1f7dca0d4
+    ../postman/environments/Wedding Bot Development.environment.yaml: 546813-6135d2ed-205d-6747-6b76-6fdeb2eca90e

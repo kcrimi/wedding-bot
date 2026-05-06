@@ -1,0 +1,57 @@
+$kind: http-request
+url: http://{{SERVER_URL}}/rsvp/1462937
+method: POST
+headers:
+  - key: X-XSRF-TOKEN
+    value: 6defb5fe6bb0a6476a6b011857329c2617af2a0f
+  - key: X-Requested-With
+    value: XMLHttpRequest
+  - key: X-AP-API-Version
+    value: 2017-06-13
+    disabled: true
+  - key: Cookie
+    value: session=7cbb450955ba22c908accba740f47e9ec6ab3c71gAJVKGRmNmI3YzY0YzQ2YTA3MGI5YWMxODA1MzkwNmNlODEzNzdjNDAxNTBxAS4=
+    disabled: true
+  - key: Content-Type
+    value: application/json
+body:
+  type: text
+  content: |
+    {
+       "id":1462937,
+       "guests":[
+          {
+             "id":2855086,
+             "rsvps":[
+                {
+                   "wedding_event_id":194063,
+                   "guest_list":1,
+                   "attending_status":"declined",
+                   "meal_option_id":"33345"
+                },
+                {
+                   "wedding_event_id":194062,
+                   "guest_list":1,
+                   "attending_status":"attending"
+                }
+             ]
+          },
+          {
+             "id":2855085,
+             "rsvps":[
+                {
+                   "wedding_event_id":194063,
+                   "guest_list":1,
+                   "attending_status":"declined",
+                   "meal_option_id":"33344"
+                },
+                {
+                   "wedding_event_id":194062,
+                   "guest_list":1,
+                   "attending_status":"attending"
+                }
+             ]
+          }
+       ]
+    }
+order: 5000
